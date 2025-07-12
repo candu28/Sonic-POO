@@ -3,6 +3,7 @@ package com.sonic.screens;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -26,7 +27,7 @@ import com.sonic.sprites.*;
 import com.sonic.tools.B2WorldCreator;
 import com.sonic.tools.WorldContactListener;
 
-public class PlayScreen implements Screen{
+public class PlayScreen extends ScreenAdapter {
     private Main game;
     private TextureAtlas atlas;
 
@@ -41,177 +42,126 @@ public class PlayScreen implements Screen{
     //Box2d Variables
     private World world;
     private Box2DDebugRenderer b2dr;
-    private Robotnik player;
-    private TrashRobot trashRobot;
-    private TextureAtlas trashAtlas;
+    private Knuckles player;
 
     private Array<Ring> coins;
     private boolean wasTPressedLastFrame = false;
-    private Array<TrashRobot> trashRobots;
-    private Array<Trash> trashItems; // Lista para almacenar los objetos de basura
-    private Array<Body> bodiesToDestroy;
-    private Array<Body> worldBodiesCache;
 
 
-    public PlayScreen(Main game){
-        this.game=game;
-        atlas=new TextureAtlas("SonicEnemy.atlas");
-        trashAtlas = new TextureAtlas("SonicEnemy.atlas");
-        gameCam=new OrthographicCamera();
-        gamePort=new FitViewport(Main.V_WIDTH/Main.PPM,Main.V_HEIGHT/Main.PPM,gameCam);
-        hud=new Hud(game.batch);
-        mapLoader=new TmxMapLoader();
-        map=mapLoader.load("level3.tmx");
-        renderer=new OrthogonalTiledMapRenderer(map,1/Main.PPM);
-        gameCam.position.set(gamePort.getWorldWidth()/2, gamePort.getWorldHeight() /2,0);
+    public PlayScreen(Main game) {
+        this.game = game;
+        atlas = new TextureAtlas("SonicGame.atlas");
+        gameCam = new OrthographicCamera();
+        gamePort = new FitViewport(Main.V_WIDTH / Main.PPM, Main.V_HEIGHT / Main.PPM, gameCam);
+        hud = new Hud(game.batch);
+        mapLoader = new TmxMapLoader();
+        map = mapLoader.load("level3.tmx");
+        renderer = new OrthogonalTiledMapRenderer(map, 1 / Main.PPM);
+        gameCam.position.set(gamePort.getWorldWidth() / 2, gamePort.getWorldHeight() / 2, 0);
 
-        world=new World(new Vector2(0,-10),true);
-        b2dr=new Box2DDebugRenderer();
+        world = new World(new Vector2(0, -10), true);
+        b2dr = new Box2DDebugRenderer();
         new B2WorldCreator(this);
+
         //create sonic in game world
-        player=new Robotnik(this,1.0f, 8.0f);
+        //player=new Tails(this,1.0f, 8.0f);
+        player = new Knuckles(this);
 
-        trashRobot = new TrashRobot(this, 7.0f, 4.0f);
+
         world.setContactListener(new WorldContactListener(this));
-        //trashRobot=new TrashRobot(this,player.b2Body.getPosition().x + 1f,player.b2Body.getPosition().y);
-        //trashRobot = new TrashRobot(this,250 / Main.PPM, 180 / Main.PPM);
-        //trashRobot = new TrashRobot(this, 1.0f, 4.0f);
-
-//        TextureAtlas coinAtlas = new TextureAtlas("Rings.atlas");
-//
-//        coins = new Array<>();
-//        MapLayer coinLayer = map.getLayers().get("anillos");
-//
-//        for (MapObject object : coinLayer.getObjects()) {
-//            Rectangle rect = ((RectangleMapObject) object).getRectangle();
-//            //coins.add(new Coin(world, map, rect, coinAtlas));
-//            coins.add(new Ring(this,rect,coinAtlas));
-//
-//        }
-        trashItems = new Array<>();
-        bodiesToDestroy = new Array<>();
-        //worldBodiesCache = new Array<>();
     }
 
-    public TextureAtlas getAtlas(){
+    public TextureAtlas getAtlas() {
         return atlas;
     }
 
-    //
-    public void createTrash(float x, float y) {
-        // Pasa el atlas de basura al constructor de Trash
-        //trashItems.add(new Trash(this,trashAtlas, x, y));
-//        TextureAtlas atlasToUse = (trashAtlas != null) ? trashAtlas : this.atlas;
-//        if (atlasToUse.findRegion("trash_robot", 9) == null) {
-//            Gdx.app.error("PlayScreen", "ERROR: La región 'trash_robot',9 no se encontró en el atlas al intentar crear Trash.");
-//            // Puedes intentar con otro nombre o simplemente no crear la basura
-//            // si el asset no existe.
-//            return;
-//        }
-//
-//        Trash newTrash = new Trash(this, atlasToUse, x, y);
-//        trashItems.add(newTrash);
-//        Gdx.app.log("PlayScreen", "Basura creada en: " + x + ", " + y);
-        TextureAtlas atlasToUse = (trashAtlas != null) ? trashAtlas : this.atlas;
-        if (atlasToUse == null) {
-            Gdx.app.error("PlayScreen", "ERROR: Ningún TextureAtlas disponible para crear Trash.");
-            return;
-        }
 
-        if (atlasToUse.findRegion("trash_robot", 9) == null) {
-            Gdx.app.error("PlayScreen", "ERROR: La región 'trash_robot',9 no se encontró en el atlas al intentar crear Trash.");
-            return;
-        }
-
-        Trash newTrash = new Trash(this, atlasToUse, x, y);
-        trashItems.add(newTrash);
-        Gdx.app.log("PlayScreen", "Basura creada en: " + x + ", " + y);
-    }
-
-    // << NUEVO: Método para añadir cuerpos a destruir de forma segura >>
-    public void addBodyToDestroy(Body body) {
-        bodiesToDestroy.add(body);
-    }
-
-    // << NUEVO: Método para obtener el jugador (si otros objetos lo necesitan) >>
 //    public Sonic getPlayer() {
 //        return player;
 //    }
 
     @Override
     public void show() {
-
     }
 
-    public void handleInput(float dt){
+    public void handleInput(float dt) {
         //If user is holding down mouse move the camera through the game world
-        if(Gdx.input.isKeyJustPressed(Input.Keys.UP) && player.onGround){
-            //player.b2Body.applyLinearImpulse(new Vector2(0,4f),player.b2Body.getWorldCenter(),true);
-            player.jump();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && player.onGround) {
+            player.b2Body.applyLinearImpulse(new Vector2(0, 4f), player.b2Body.getWorldCenter(), true);
+            //player.jump();
         }
-        if(Gdx.input.isKeyPressed(Input.Keys.RIGHT) && player.b2Body.getLinearVelocity().x<=2){
-            player.b2Body.applyLinearImpulse(new Vector2(0.1f,0),player.b2Body.getWorldCenter(),true);
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT) && player.b2Body.getLinearVelocity().x <= 2) {
+            player.b2Body.applyLinearImpulse(new Vector2(0.1f, 0), player.b2Body.getWorldCenter(), true);
         }
-        if(Gdx.input.isKeyPressed(Input.Keys.LEFT) && player.b2Body.getLinearVelocity().x>=-2){
-            player.b2Body.applyLinearImpulse(new Vector2(-0.1f,0),player.b2Body.getWorldCenter(),true);
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT) && player.b2Body.getLinearVelocity().x >= -2) {
+            player.b2Body.applyLinearImpulse(new Vector2(-0.1f, 0), player.b2Body.getWorldCenter(), true);
         }
 
         boolean isTPressedCurrentFrame = Gdx.input.isKeyPressed(Input.Keys.T);
-        if(isTPressedCurrentFrame){
-            //player.activateTornado();
-            player.activateHit();
-        }
+        if (isTPressedCurrentFrame && !wasTPressedLastFrame) {
+            if (!player.isSuperHitModeActive) { // Si el modo dron no está activo, activarlo
+                player.activateSuperHitMode(); //
+            } else {
+                player.deactivateSuperHitMode();
+            }
 
-        if(!isTPressedCurrentFrame && wasTPressedLastFrame){
-            //player.deactivateTornado();
-            player.desactivateHit();
-        }
+//        if(!isTPressedCurrentFrame && wasTPressedLastFrame){
+//            player.deactivateSuperHitMode();
+//        }
+//        if (isTPressedCurrentFrame && !wasTPressedLastFrame) {
+//            if (player.isDronModeActive) {
+//                player.deactivateDronMode();
+//            } else {
+//                player.activateDronMode();
+//            }
+//        }
+//        if (player.isDronModeActive) {
+//            // Movimiento ascendente
+//            if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+//                player.b2Body.setLinearVelocity(player.b2Body.getLinearVelocity().x, 1.5f); // Ajusta la velocidad Y
+//            }
+//            // Movimiento descendente
+//            if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+//                player.b2Body.setLinearVelocity(player.b2Body.getLinearVelocity().x, -1.5f);
+//            }
+//        }
+//        if (isTPressedCurrentFrame && !wasTPressedLastFrame) {
+//            if (!player.isDronModeActive) { // Si el modo dron no está activo, activarlo
+//                player.activateDronMode(); //
+//                // Opcional: Aquí podrías ajustar la gravedad de Box2D si el dron flota.
+//                // player.b2Body.setGravityScale(0);
+//            } else { // Si el modo dron ya está activo, desactivarlo
+//                player.deactivateDronMode(); //
+//                // Opcional: Aquí podrías restaurar la gravedad si la cambiaste.
+//                // player.b2Body.setGravityScale(1);
+//            }
+//            //player.activateTornado();
+//            //player.activateHit();
+//        }
 
-        wasTPressedLastFrame = isTPressedCurrentFrame;
+//        if(!isTPressedCurrentFrame && wasTPressedLastFrame){
+//            //player.deactivateTornado();
+//            //player.desactivateHit();
+//        }
+
+            wasTPressedLastFrame = isTPressedCurrentFrame;
+        }
     }
 
-    public void update(float dt){
+    public void update(float dt) {
         handleInput(dt);
         world.step(1 / 60f, 6, 2);
 
         player.update(dt);
+        if (player.isSuperHitModeActive && player.isOnGround()) {
+            player.deactivateSuperHitMode();
+            Gdx.app.log("Fix", "Desactivando modo dron porque Tails tocó el suelo");
+        }
+
         gameCam.position.x = player.b2Body.getPosition().x; // La cámara sigue a Robotnik en X
         gameCam.update(); // Actualiza la cámara después de cambiar su posición.
         renderer.setView(gameCam); // Actualiza la vista del renderizador del mapa.
 
-//        trashRobot.update(dt);
-//
-//        // <<<<<<<<<<<<<<<< ACTUALIZAR Y ELIMINAR OBJETOS DE BASURA >>>>>>>>>>>>>>>>>>
-//        // Iterar sobre la lista de basura. Si un objeto de basura está 'destroyed' (marcado para eliminación y su cuerpo
-//        // de Box2D ya fue añadido a bodiesToDestroy por su propio método update()), entonces se elimina de esta lista.
-//        for (int i = 0; i < trashItems.size; i++) {
-//            Trash trash = trashItems.get(i);
-//            trash.update(dt); // Llama al update de Trash, que podría marcar el cuerpo para destrucción
-//            if (trash.isDestroyed()) { // Si Trash ya ha programado la destrucción de su cuerpo
-//                trashItems.removeIndex(i); // Elimina el sprite de la lista de dibujado y actualización
-//                i--; // Ajustar el índice debido a la eliminación
-//            }
-//        }
-//        // <<<<<<<<<<<<<<<< FIN DE ACTUALIZAR Y ELIMINAR BASURA >>>>>>>>>>>>>>>>>>
-//
-//        // Destruir cuerpos Box2D que están en la lista bodiesToDestroy
-//        // Esto debe hacerse fuera de world.step() y fuera de cualquier callback de Box2D.
-//        for (Body body : bodiesToDestroy) {
-//            if (body != null && !world.isLocked() && body.getUserData() != null) {
-//                // Solo destruye si el mundo no está bloqueado y el cuerpo no es nulo
-//                world.destroyBody(body);
-//                Gdx.app.log("PlayScreen", "Cuerpo Box2D destruido: " + body.getUserData());
-//            } else if (world.isLocked()) {
-//                Gdx.app.log("PlayScreen", "WARN: El mundo está bloqueado, posponiendo la destrucción de cuerpos.");
-//            } else if (body == null) {
-//                Gdx.app.log("PlayScreen", "WARN: Intentando destruir un cuerpo nulo.");
-//            }
-//        }
-//        bodiesToDestroy.clear(); // Limpiar la lista después de intentar destruir
-
-//        gameCam.position.x = player.b2Body.getPosition().x;
-//        gameCam.update();
-//        renderer.setView(gameCam);
     }
 
     @Override
@@ -221,7 +171,7 @@ public class PlayScreen implements Screen{
         //handleInput(delta);
 
         //Clear the game screen with black
-        Gdx.gl.glClearColor(0,0,0,1);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         //world.step(1 / 60f, 6, 2);
@@ -243,15 +193,15 @@ public class PlayScreen implements Screen{
     }
 
     @Override
-    public void resize(int width, int height){
-        gamePort.update(width, height,true);
+    public void resize(int width, int height) {
+        gamePort.update(width, height, true);
     }
 
-    public TiledMap getMap(){
+    public TiledMap getMap() {
         return map;
     }
 
-    public World getWorld(){
+    public World getWorld() {
         return world;
     }
 
@@ -282,12 +232,5 @@ public class PlayScreen implements Screen{
         b2dr.dispose();
         hud.dispose();
         atlas.dispose();
-//        if (trashAtlas != null) {
-//            trashAtlas.dispose();
-//        }
-  }
-
-    public Enemy getPlayer() {
-        return this.trashRobot;
     }
 }

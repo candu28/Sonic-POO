@@ -4,10 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.physics.box2d.*;
 import com.sonic.Main;
 import com.sonic.screens.PlayScreen;
-import com.sonic.sprites.InteractiveTileObject;
-import com.sonic.sprites.Robotnik;
-import com.sonic.sprites.Sonic;
-import com.sonic.sprites.Trash;
+import com.sonic.sprites.*;
 
 public class WorldContactListener implements ContactListener {
     private int footContacts=0;
@@ -47,8 +44,39 @@ public class WorldContactListener implements ContactListener {
 //                    Gdx.app.log("Contact", "Sonic ON GROUND (from beginContact).");
 //                }
 //            }
-        Object userDataA = fixA.getBody().getUserData();
-        Object userDataB = fixB.getBody().getUserData();
+        Object userDataA = fixA.getUserData();
+        Object userDataB = fixB.getUserData();
+
+        boolean isFootA = userDataA instanceof String && ((String) userDataA).equals("foot");
+        boolean isFootB = userDataB instanceof String && ((String) userDataB).equals("foot");
+
+        if (isFootA || isFootB) {
+            Fixture footSensor = isFootA ? fixA : fixB;
+            Fixture other = footSensor == fixA ? fixB : fixA;
+
+            // Verifica que el otro fixture representa suelo válido
+            int otherBits = other.getFilterData().categoryBits;
+            boolean isGround = otherBits == Main.GROUND_BIT || otherBits == Main.BRICK_BIT;
+
+            Object bodyUser = footSensor.getBody().getUserData();
+            if (isGround && bodyUser instanceof Sonic) {
+                Sonic sonic = (Sonic) bodyUser;
+                sonic.setOnGround(true);
+            }
+            if (isGround && bodyUser instanceof Tails) {
+                Tails tails = (Tails) bodyUser;
+                tails.setOnGround(true);
+            }
+            if(isGround && bodyUser instanceof Knuckles){
+                Knuckles knuckles = (Knuckles) bodyUser;
+                knuckles.setOnGround(true);
+            }
+        }
+
+
+
+//        Object userDataA = fixA.getBody().getUserData();
+//        Object userDataB = fixB.getBody().getUserData();
 
         // Combinación de bits de las categorías de los cuerpos que colisionan
         int cDef = fixA.getFilterData().categoryBits | fixB.getFilterData().categoryBits;
@@ -133,8 +161,38 @@ public class WorldContactListener implements ContactListener {
 //                }
 //            }
 //        }
-        Object userDataA = fixA.getBody().getUserData();
-        Object userDataB = fixB.getBody().getUserData();
+        Object userDataA = fixA.getUserData();
+        Object userDataB = fixB.getUserData();
+
+        boolean isFootA = userDataA != null && userDataA instanceof String && ((String) userDataA).equals("foot");
+        boolean isFootB = userDataB != null && userDataB instanceof String && ((String) userDataB).equals("foot");
+
+        if (isFootA || isFootB) {
+            Fixture footSensor = isFootA ? fixA : fixB;
+            Fixture other = footSensor == fixA ? fixB : fixA;
+
+            int otherBits = other.getFilterData().categoryBits;
+            boolean isGround = otherBits == Main.GROUND_BIT || otherBits == Main.BRICK_BIT;
+
+            Object bodyUser = footSensor.getBody().getUserData();
+            if (isGround && bodyUser instanceof Sonic) {
+                Sonic sonic = (Sonic) bodyUser;
+                sonic.setOnGround(true);
+
+            }
+            if (isGround && bodyUser instanceof Tails) {
+                Tails tails = (Tails) bodyUser;
+                tails.setOnGround(false);
+
+            }
+            if (isGround && bodyUser instanceof Knuckles) {
+                Knuckles knuckles = (Knuckles) bodyUser;
+                knuckles.setOnGround(false);
+
+            }
+        }
+//        Object userDataA = fixA.getBody().getUserData();
+//        Object userDataB = fixB.getBody().getUserData();
 
         int cDef = fixA.getFilterData().categoryBits | fixB.getFilterData().categoryBits;
 
@@ -162,9 +220,6 @@ public class WorldContactListener implements ContactListener {
                 Gdx.app.log("ContactListener", "Robotnik ha dejado el suelo (cuerpo principal).");
             }
         }
-
-        // --- Otros contactos (ej. Sonic vs. Robotnik) ---
-        // No hay lógica para endContact
 
     }
 

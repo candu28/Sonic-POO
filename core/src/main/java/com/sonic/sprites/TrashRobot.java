@@ -128,7 +128,7 @@ public class TrashRobot extends Enemy {
 
         System.out.println("Robot lanza basura!"); // Mensaje de depuración
 
-        screen.createTrash(b2Body.getPosition().x, b2Body.getPosition().y - (20 / Main.PPM));
+        //screen.createTrash(b2Body.getPosition().x, b2Body.getPosition().y - (20 / Main.PPM));
     }
 
     @Override
