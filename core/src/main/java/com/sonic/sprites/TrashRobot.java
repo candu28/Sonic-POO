@@ -26,7 +26,7 @@ public class TrashRobot extends Enemy {
     private static final float DROP_INTERVAL = 3f;
 
     public TrashRobot(PlayScreen screen, float x, float y) {
-        super(screen, x, y);
+        super(screen,x, y);
 
         Array<TextureRegion> frames = new Array<>();
 

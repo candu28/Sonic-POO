@@ -41,7 +41,7 @@ public class PlayScreen implements Screen{
     //Box2d Variables
     private World world;
     private Box2DDebugRenderer b2dr;
-    private Sonic player;
+    private Robotnik player;
     private TrashRobot trashRobot;
     private TextureAtlas trashAtlas;
 
@@ -55,8 +55,8 @@ public class PlayScreen implements Screen{
 
     public PlayScreen(Main game){
         this.game=game;
-        atlas=new TextureAtlas("SonicGame.atlas");
-        trashAtlas = new TextureAtlas("SonicGame.atlas");
+        atlas=new TextureAtlas("SonicEnemy.atlas");
+        trashAtlas = new TextureAtlas("SonicEnemy.atlas");
         gameCam=new OrthographicCamera();
         gamePort=new FitViewport(Main.V_WIDTH/Main.PPM,Main.V_HEIGHT/Main.PPM,gameCam);
         hud=new Hud(game.batch);
@@ -69,7 +69,8 @@ public class PlayScreen implements Screen{
         b2dr=new Box2DDebugRenderer();
         new B2WorldCreator(this);
         //create sonic in game world
-        player=new Sonic(this);
+        player=new Robotnik(this,1.0f, 8.0f);
+
         trashRobot = new TrashRobot(this, 7.0f, 4.0f);
         world.setContactListener(new WorldContactListener(this));
         //trashRobot=new TrashRobot(this,player.b2Body.getPosition().x + 1f,player.b2Body.getPosition().y);
@@ -145,7 +146,8 @@ public class PlayScreen implements Screen{
     public void handleInput(float dt){
         //If user is holding down mouse move the camera through the game world
         if(Gdx.input.isKeyJustPressed(Input.Keys.UP) && player.onGround){
-            player.b2Body.applyLinearImpulse(new Vector2(0,4f),player.b2Body.getWorldCenter(),true);
+            //player.b2Body.applyLinearImpulse(new Vector2(0,4f),player.b2Body.getWorldCenter(),true);
+            player.jump();
         }
         if(Gdx.input.isKeyPressed(Input.Keys.RIGHT) && player.b2Body.getLinearVelocity().x<=2){
             player.b2Body.applyLinearImpulse(new Vector2(0.1f,0),player.b2Body.getWorldCenter(),true);
@@ -155,12 +157,14 @@ public class PlayScreen implements Screen{
         }
 
         boolean isTPressedCurrentFrame = Gdx.input.isKeyPressed(Input.Keys.T);
-        if(isTPressedCurrentFrame && !wasTPressedLastFrame){
-            player.activateTornado();
+        if(isTPressedCurrentFrame){
+            //player.activateTornado();
+            player.activateHit();
         }
 
         if(!isTPressedCurrentFrame && wasTPressedLastFrame){
-            player.deactivateTornado();
+            //player.deactivateTornado();
+            player.desactivateHit();
         }
 
         wasTPressedLastFrame = isTPressedCurrentFrame;
@@ -168,10 +172,13 @@ public class PlayScreen implements Screen{
 
     public void update(float dt){
         handleInput(dt);
-
         world.step(1 / 60f, 6, 2);
 
         player.update(dt);
+        gameCam.position.x = player.b2Body.getPosition().x; // La cámara sigue a Robotnik en X
+        gameCam.update(); // Actualiza la cámara después de cambiar su posición.
+        renderer.setView(gameCam); // Actualiza la vista del renderizador del mapa.
+
 //        trashRobot.update(dt);
 //
 //        // <<<<<<<<<<<<<<<< ACTUALIZAR Y ELIMINAR OBJETOS DE BASURA >>>>>>>>>>>>>>>>>>
@@ -202,55 +209,34 @@ public class PlayScreen implements Screen{
 //        }
 //        bodiesToDestroy.clear(); // Limpiar la lista después de intentar destruir
 
-        gameCam.position.x = player.b2Body.getPosition().x;
-        gameCam.update();
-        renderer.setView(gameCam);
+//        gameCam.position.x = player.b2Body.getPosition().x;
+//        gameCam.update();
+//        renderer.setView(gameCam);
     }
 
     @Override
     public void render(float delta) {
         //separate update logic from render
         update(delta);
+        //handleInput(delta);
 
         //Clear the game screen with black
         Gdx.gl.glClearColor(0,0,0,1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        //world.step(1 / 60f, 6, 2);
         //render game map
         renderer.render();
-
         //render BOX2DDebugLines
-        //b2dr.render(world, gameCam.combined);
-
+        b2dr.render(world, gameCam.combined);
+        //player.update(delta);
         //set our batch to draw what the game camera sees for Sonic
         game.batch.setProjectionMatrix(gameCam.combined);
         game.batch.begin();
         player.draw(game.batch);
-        //trashRobot.draw(game.batch);
-        //.batch.end();
-        // Dibujar anillos
-//        for (Ring ring : coins) {
-//            ring.draw(game.batch); // Usa draw en lugar de render si Ring extiende Sprite o tiene un draw(batch)
-//        }
 
-//        // << NUEVO: Dibujar los objetos de basura >>
-//        for (Trash trash : trashItems) {
-//            if (!trash.isDestroyed()) { // Solo dibuja si no ha sido destruida
-//                trash.draw(game.batch);
-//            }
-//        }
 
-        game.batch.end(); // << ÚNICO END AL FINAL DE TODOS LOS DIBUJOS DE JUEGO >>
-
-//        game.batch.setProjectionMatrix(hud.stage.getCamera().combined);
-//        hud.stage.draw();
-//
-//        for (Ring ring: coins) {
-//            ring.render(game.batch);
-//        }
-//        trashRobot.render(game.batch);
-//        player.draw(game.batch);
-//        game.batch.end();
+        game.batch.end();
 
         game.batch.setProjectionMatrix(hud.stage.getCamera().combined);
         hud.stage.draw();

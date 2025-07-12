@@ -17,6 +17,9 @@ public class Main extends Game {
     public static final short OBJECT_BIT=32;
     public static final short ENEMY_BIT=64;
     public static final short TRASH_BIT=128;
+    public static final short ENEMY_HEAD_BIT = 128;
+    public static final short ITEM_BIT = 256;
+    public static final short SONIC_FOOT_BIT = 512;
     public static final short NOTHING_BIT = 0;
 
     public SpriteBatch batch;
